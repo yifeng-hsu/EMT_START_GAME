@@ -3,47 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>START 專業檢傷模擬訓練 (邏輯修正版)</title>
+    <title>START 檢傷模擬訓練 (邏輯終極修正版)</title>
     <style>
-        :root { 
-            --red: #c0392b; --yellow: #f1c40f; --green: #27ae60; --black: #2c3e50; 
-            --bg: #2c3e50; --card-bg: #ecf0f1; 
-        }
-        body { 
-            font-family: "Microsoft JhengHei", sans-serif; 
-            background: var(--bg); color: white; text-align: center; margin: 0; padding: 20px; 
-        }
+        :root { --red: #c0392b; --yellow: #f1c40f; --green: #27ae60; --black: #2c3e50; --bg: #2c3e50; }
+        body { font-family: "Microsoft JhengHei", sans-serif; background: var(--bg); color: white; text-align: center; padding: 20px; }
         .container { max-width: 650px; margin: auto; }
-        .card { 
-            background: var(--card-bg); color: #333; border-radius: 12px; 
-            padding: 25px; margin: 20px 0; text-align: left; line-height: 1.8; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3); 
-        }
+        .card { background: #ecf0f1; color: #333; border-radius: 12px; padding: 25px; margin: 20px 0; text-align: left; line-height: 1.8; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
         .btn-group { display: flex; justify-content: space-around; flex-wrap: wrap; gap: 10px; }
-        .btn { 
-            padding: 12px 20px; border: none; border-radius: 6px; cursor: pointer; 
-            font-weight: bold; font-size: 16px; transition: 0.2s; min-width: 110px; 
-        }
+        .btn { padding: 12px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 16px; min-width: 110px; }
         .btn-red { background: var(--red); color: white; }
         .btn-yellow { background: var(--yellow); color: black; }
         .btn-green { background: var(--green); color: white; }
         .btn-black { background: var(--black); color: white; border: 1px solid white; }
-        .btn-start { background: #3498db; color: white; padding: 15px 30px; font-size: 18px; margin-top: 10px; }
-        
+        .btn-start { background: #3498db; color: white; padding: 15px 30px; font-size: 18px; }
         #timer { font-size: 24px; font-weight: bold; color: #e74c3c; margin: 10px 0; }
-        #count { font-size: 18px; color: #bdc3c7; }
-        
-        .wrong-record { 
-            border: 2px solid var(--red); padding: 15px; margin-bottom: 15px; 
-            border-radius: 8px; background: #fff5f5; color: var(--red) !important; 
-        }
+        .wrong-record { border: 2px solid var(--red); padding: 15px; margin-bottom: 15px; border-radius: 8px; background: #fff5f5; color: var(--red) !important; }
         .wrong-record * { color: var(--red) !important; }
-        
-        .correct-record { 
-            border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; 
-            border-radius: 8px; background: #f9f9f9; color: #2c3e50; 
-        }
-        hr { border: 0; border-top: 1px solid #ccc; margin: 15px 0; }
+        .correct-record { border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 8px; background: #f9f9f9; color: #2c3e50; }
+        hr { border: 0; border-top: 1px solid #ccc; margin: 10px 0; }
     </style>
 </head>
 <body>
@@ -53,13 +30,12 @@
 
     <div id="setup-screen">
         <div class="card">
-            <h3>【邏輯修正說明】</h3>
-            <p>
-                ● 修正了題目生成的隨機引擎，確保數據點與答案 100% 符合 START 流程。<br>
-                ● <b>紅色 (Red)</b>：呼吸 > 30、或 CRT > 2、或無法遵循指令。<br>
-                ● <b>綠色 (Green)</b>：凡是「可自行走動」者，數據必設定為正常值。<br><br>
-                <b>請選擇答題秒數開始：</b>
-            </p>
+            <h3>【邏輯鐵律版】</h3>
+            <p>● <b>紅色 (Red)</b>：呼吸 > 30 <b>或</b> CRT > 2 <b>或</b> 無指令。<br>
+               ● <b>黃色 (Yellow)</b>：呼吸、循環、意識皆正常，但無法行走。<br>
+               ● <b>綠色 (Green)</b>：可自行行走者（數據必為正常）。<br>
+               ● <b>黑色 (Black)</b>：無呼吸（包含暢通呼吸道後）。</p>
+            <p><b>請選擇答題秒數開始：</b></p>
             <div class="btn-group">
                 <button class="btn btn-start" onclick="startGame(5)">5 秒</button>
                 <button class="btn btn-start" onclick="startGame(10)">10 秒</button>
@@ -94,23 +70,96 @@
 
 <script>
     let score = 0, qIdx = 0, pool = [], records = [], timer, timeLeft, limit;
-    const scenarios = ["國道連環車禍", "化工廠氣爆", "捷運隨機攻擊", "火警現場", "建築坍塌"];
 
-    function generatePatient(target) {
+    function generatePatient(targetColor) {
         let p = {
-            scenario: scenarios[Math.floor(Math.random()*scenarios.length)],
+            scenario: "事故現場",
             age: Math.floor(Math.random()*60)+15,
             sex: Math.random() > 0.5 ? "男" : "女",
-            walk: false,
-            breath: true,
-            rr: 20,
-            pulse: true,
-            crt: 1.2,
-            obey: true,
-            note: "",
-            ans: target
+            walk: false, breath: true, rr: 20, pulse: true, crt: 1.2, obey: true, note: "", ans: targetColor
         };
 
-        switch(target) {
-            case "Green":
-                p.walk =
+        if (targetColor === "Green") {
+            p.walk = true;
+            p.note = "輕微擦傷，神智清醒，可配合走動。";
+        } 
+        else if (targetColor === "Black") {
+            p.breath = false; p.rr = 0; p.pulse = false; p.crt = 0; p.obey = false;
+            p.note = "頭部重創，暢通氣道後仍無呼吸。";
+        } 
+        else if (targetColor === "Red") {
+            let r = Math.floor(Math.random() * 3);
+            if (r === 0) { p.rr = 34; p.note = "呼吸極快，肋間凹陷。"; }
+            else if (r === 1) { p.pulse = false; p.crt = 3.5; p.note = "大出血，摸不到橈動脈。"; }
+            else { p.obey = false; p.note = "意識昏迷，對痛覺有反應但無法配合指令。"; }
+        } 
+        else if (targetColor === "Yellow") {
+            p.rr = 24; p.crt = 1.5; p.obey = true;
+            p.note = "開放性骨折，劇痛無法站立，但能清楚對談。";
+        }
+        return p;
+    }
+
+    function startGame(s) {
+        limit = s; score = 0; qIdx = 0; records = []; pool = [];
+        ["Red", "Yellow", "Green", "Black"].forEach(c => {
+            for(let i=0; i<5; i++) pool.push(generatePatient(c));
+        });
+        pool.sort(() => Math.random() - 0.5);
+        document.getElementById('setup-screen').style.display = 'none';
+        document.getElementById('game-screen').style.display = 'block';
+        showQuestion();
+    }
+
+    function showQuestion() {
+        if (qIdx >= 20) return showResult();
+        const p = pool[qIdx];
+        timeLeft = limit;
+        document.getElementById('count').innerText = `Question: ${qIdx + 1} / 20`;
+        document.getElementById('patient-data').innerHTML = `
+            ● 行動能力：${p.walk ? '<span style="color:green; font-weight:bold;">可自行走動</span>' : '無法行走'}<br>
+            ● 呼吸評估：${p.breath ? '有' : '無'} (速率：${p.rr} 次/分)<br>
+            ● 循環評估：橈動脈 ${p.pulse ? '有' : '摸不到'}<br>
+            ● 循環評估：CRT 為 ${p.crt} 秒<br>
+            ● 指令配合：${p.obey ? '意識清楚，能遵從指令' : '意識障礙，無法配合指令'}<br>
+            ● 臨床見聞：${p.note}
+        `;
+        startTimer();
+    }
+
+    function startTimer() {
+        clearInterval(timer);
+        document.getElementById('timer').innerText = `Time: ${timeLeft}s`;
+        timer = setInterval(() => {
+            timeLeft--;
+            document.getElementById('timer').innerText = `Time: ${timeLeft}s`;
+            if (timeLeft < 0) { clearInterval(timer); handleAnswer("未作答 (逾時)"); }
+        }, 1000);
+    }
+
+    function handleAnswer(choice) {
+        clearInterval(timer);
+        const p = pool[qIdx];
+        const isCorrect = (choice === p.ans);
+        if (isCorrect) score++;
+        records.push({ q: qIdx+1, display: document.getElementById('patient-data').innerHTML, ans: p.ans, pick: choice, isCorrect: isCorrect });
+        qIdx++;
+        showQuestion();
+    }
+
+    function showResult() {
+        document.getElementById('game-screen').style.display = 'none';
+        document.getElementById('result-screen').style.display = 'block';
+        document.getElementById('final-score').innerHTML = `正確數：${score} / 20 (${Math.round(score/20*100)}%)`;
+        let html = "";
+        records.forEach(r => {
+            html += `<div class="${r.isCorrect ? 'correct-record' : 'wrong-record'}">
+                <b>${r.isCorrect ? '✅' : '❌'} 第 ${r.q} 題回顧</b><br>${r.display}<hr>
+                <b>正確答案：${r.ans}</b> | 你的作答：${r.pick}
+            </div>`;
+        });
+        document.getElementById('review-area').innerHTML = html;
+    }
+</script>
+</body>
+</html>
