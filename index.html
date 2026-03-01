@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>START 專業檢傷模擬訓練 (正式測驗版)</title>
+    <title>START 專業檢傷模擬訓練 (進階數值版)</title>
     <style>
         :root { 
             --red: #c0392b; --yellow: #f1c40f; --green: #27ae60; --black: #2c3e50; 
@@ -53,15 +53,17 @@
 
     <div id="setup-screen">
         <div class="card">
-            <h3>【測驗說明】</h3>
+            <h3>【訓練說明】</h3>
             <p>
-                ● 測驗共 20 題，包含紅、黃、綠、黑四種檢傷分類。<br>
+                ● 總共 20 題，紅黃綠黑各佔 5 題<br>
+                ● 錯誤題目在結尾將以紅字標示。<br>
                 <b>請選擇單題答題時間開始：</b>
             </p>
             <div class="btn-group">
-                <button class="btn btn-start" onclick="startGame(5)">5 秒 (挑戰)</button>
-                <button class="btn btn-start" onclick="startGame(10)">10 秒 (專業)</button>
-                <button class="btn btn-start" onclick="startGame(20)">20 秒 (練習)</button>
+                <button class="btn btn-start" onclick="startGame(5)">5 秒</button>
+                <button class="btn btn-start" onclick="startGame(10)">10 秒</button>
+                <button class="btn btn-start" onclick="startGame(15)">15 秒</button>
+                <button class="btn btn-start" onclick="startGame(20)">20 秒</button>
             </div>
         </div>
     </div>
@@ -93,16 +95,20 @@
     let score = 0, qIdx = 0, pool = [], records = [], timer, timeLeft, limit;
     const scenarios = ["國道連環車禍", "化工廠氣爆", "捷運隨機攻擊", "火警現場", "建築坍塌"];
 
+    function getRandomInt(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
     function generatePatient(target) {
         let p = {
             scenario: scenarios[Math.floor(Math.random()*scenarios.length)],
-            age: Math.floor(Math.random()*60)+15,
+            age: getRandomInt(10, 80),
             sex: Math.random() > 0.5 ? "男" : "女",
             walk: false,
             breath: true,
-            rr: 20,
+            rr: 0,
             pulse: true,
-            crt: 1.2,
+            crt: 0,
             obey: true,
             note: "",
             ans: target
@@ -111,8 +117,9 @@
         switch(target) {
             case "Green":
                 p.walk = true;
-                p.rr = 22;
-                p.note = "身上有些微擦傷，可自行走動";
+                p.rr = getRandomInt(12, 28); // 正常範圍
+                p.crt = getRandomInt(1, 2);   // 正常範圍
+                p.note = "身上有些微擦傷與污漬，可自行走動";
                 break;
             case "Black":
                 p.breath = false;
@@ -120,28 +127,32 @@
                 p.pulse = false;
                 p.crt = 0;
                 p.obey = false;
-                p.note = "頭部受傷嚴重，無呼吸，對痛覺刺激無反應";
+                p.note = "頭部受傷嚴重，且暢通氣道後仍無呼吸";
                 break;
             case "Red":
                 let redReason = Math.floor(Math.random() * 3);
                 if (redReason === 0) {
-                    p.rr = 34; // 呼吸 > 30
-                    p.note = "呼吸非常急促且費力";
+                    p.rr = getRandomInt(31, 40); // 呼吸過快
+                    p.crt = getRandomInt(1, 2);
+                    p.note = "呼吸非常急促且費力，臉色發紺";
                 } else if (redReason === 1) {
+                    p.rr = getRandomInt(10, 28);
                     p.pulse = false; // 循環異常
-                    p.crt = 3.2;
-                    p.note = "傷口大量出血，橈動脈摸不到";
+                    p.crt = getRandomInt(3, 10); // CRT 延長
+                    p.note = "傷口大量出血，橈動脈摸不到，膚色慘白";
                 } else {
+                    p.rr = getRandomInt(10, 28);
+                    p.crt = getRandomInt(1, 2);
                     p.obey = false; // 意識異常
-                    p.note = "對簡單指令無反應（意識障礙）";
+                    p.note = "對簡單指令無反應（意識障礙），疑頭部受創";
                 }
                 break;
             case "Yellow":
-                p.rr = 24; // 呼吸 < 30
+                p.rr = getRandomInt(10, 28); // 正常呼吸
                 p.pulse = true;
-                p.crt = 1.5; // CRT < 2
-                p.obey = true; // 能遵從指令
-                p.note = "下肢開放性骨折變形，無法行走，但意識清楚";
+                p.crt = getRandomInt(1, 2);   // 正常循環
+                p.obey = true;                // 意識清楚
+                p.note = "下肢肢體明顯變形或劇痛，無法行走，但對答如流";
                 break;
         }
         return p;
@@ -163,7 +174,6 @@
         const p = pool[qIdx];
         timeLeft = limit;
         document.getElementById('count').innerText = `Question: ${qIdx + 1} / 20`;
-        // 修正：移除綠色字體與加粗，改為純文字顯示
         document.getElementById('patient-data').innerHTML = `
             <b>【情境】：</b>${p.scenario}<br>
             <b>【傷患】：</b>${p.sex}性，${p.age} 歲<hr>
